@@ -48,8 +48,8 @@ def messageLength(data):
         return messageLen
 
 #check if message has a website url
-def hasWebsite(data, frame):
-    print(data)
+def hasWebsite(data):
+    #print(data)
     for index, value in enumerate(data):
         if(value.startswith('www') or value.startswith('http//') or value.startswith('ftp//')):
             return True
@@ -60,6 +60,7 @@ def mostFrequentWords(data, frame):
     counts = Counter(data)
     item = counts.most_common(1)
     #print(data)
+    
     print(item)
     
 def preProcessMessage(data,stop_words = True, stemm = True, lower = True, grams = 2):
@@ -67,7 +68,7 @@ def preProcessMessage(data,stop_words = True, stemm = True, lower = True, grams 
     if(lower):
         data = data.str.lower()
         #remove punctuations
-        data = data.str.translate(str.maketrans("","",".:;,!?&"))
+        data = data.str.translate(str.maketrans("","",'|-[]_.:;,!?&()''""\\'))
         #tokenize the data
         tokens = [lang.word_tokenize(token) for token in data]
 
@@ -112,11 +113,28 @@ def main():
     train.reset_index(inplace=True)
     train.drop(['index'], axis = 1, inplace=True)
     
-    wordcloud = WordCloud().generate_from_frequencies(train['SMS Message'])
-    print(wordcloud)
+    
+    #wordcloud = WordCloud().generate_from_frequencies(train['SMS Message'])
+    #print(wordcloud)
+    
     #process messages before createing a word cloud for optimization
     
-    #train['SMS Message'] = preProcessMessage(train['SMS Message'])
+    train['SMS Message'] = preProcessMessage(train['SMS Message'])
+    
+    for i in range(len(train)):
+      featureFrame.append(hasWebsite(train['SMS Message'][i]))
+      
+    #append feature to the data frame
+    df2 = pd.DataFrame(featureFrame)
+    train['F1'] = df2
+    print(train)
+    print(train['SMS Message'])
+    
+    #call feature 2
+    
+    
+    #print(len(featureFrame))
+    
     #words = mostFrequentWords(train['SMS Message'])
     #mostFrequentWords(train['SMS Message'])
     #isweb = hasWebsite(train['SMS Message'][9], featureFrame)
