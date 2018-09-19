@@ -43,25 +43,26 @@ def createWordCloud(data):
 
 # measure the length of the message
 def messageLength(data):
-    for i in range(data):
-        messageLen = len(data[i])
-        return messageLen
+    messageLen = len(data)
+    return messageLen
 
 #check if message has a website url
 def hasWebsite(data):
     #print(data)
     for index, value in enumerate(data):
         if(value.startswith('www') or value.startswith('http//') or value.startswith('ftp//')):
-            return True
-    return False
+            return 1
+    return 0
 
 #check for the most frequent words
-def mostFrequentWords(data, frame):   
+def mostFrequentWords(data):   
     counts = Counter(data)
     item = counts.most_common(1)
-    #print(data)
-    
+    for index, value in enumerate(item):
+        item = value[1]
+        
     print(item)
+    #return item
     
 def preProcessMessage(data,stop_words = True, stemm = True, lower = True, grams = 2):
     #set the words to lowercase, this helps us to not deal with free or FREE as two different words 
@@ -123,12 +124,27 @@ def main():
     
     for i in range(len(train)):
       featureFrame.append(hasWebsite(train['SMS Message'][i]))
-      
+     
     #append feature to the data frame
     df2 = pd.DataFrame(featureFrame)
     train['F1'] = df2
     print(train)
-    print(train['SMS Message'])
+    
+    for i in range(len(train)):
+      featureFrame.append(messageLength(train['SMS Message'][i]))
+    
+    #append feature to the data frame
+    df2 = pd.DataFrame(featureFrame)
+    train['F2'] = df2
+    print(train)
+    
+    for i in range(len(train)):
+        featureFrame.append(mostFrequentWords(train['SMS Message'][i]))
+    
+    #append feature to the data frame
+    df2 = pd.DataFrame(featureFrame)
+    train['F3'] = df2
+    print(train)
     
     #call feature 2
     
