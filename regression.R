@@ -1,54 +1,30 @@
-#load datasets: nrows= 10,
-packages <- c('tm', 'SnowballC', 'caTools', 'rpart', 'rpart.plot', 'randomForest', 'ROCR',"RColorBrewer","e1071","gmodels","NLP")
-if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
-  install.packages(setdiff(packages, rownames(installed.packages())))  
-}
-library(tm)
-library(SnowballC)
-library(caTools)
-library(rpart)
-library(rpart.plot)
-library(randomForest)
-library(ROCR)
-library(NLP)
-library(RColorBrewer)
-library(e1071)
-library(gmodels)
+# Load the raw training data and replace any missing values with NA
+training.data.raw <- read.csv('trainingData.csv', header=T, na.strings=c(""))
 
-trainingSet <- read.csv('trainingData.csv', header=TRUE, fileEncoding="UTF-8-BOM", strip.white = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
-df <- data.frame(trainingSet)
-df <- trainingSet[complete.cases(trainingSet),]
+# lets output the number of any missing values
+sapply(training.data.raw, function(x) sum(is.na(x)))
 
-df
-sms_corpus <- VCorpus(VectorSource(df))
-sms_corpus
+# check how many different values for each feature
+sapply(training.data.raw, function(x) length(unique(x)))
 
-sms_corpus_clean <-tm_map(sms_corpus, content_transformer(tolower))
-sms_corpus_clean <- tm_map(sms_corpus_clean, removeNumbers)
-sms_corpus_clean <-tm_map(sms_corpus_clean, removeWords, stopwords())
-sms_corpus_clean <- tm_map(sms_corpus_clean, removePunctuation)
-sms_corpus_clean <- tm_map(sms_corpus_clean, stemDocument)
-sms_corpus_clean <- tm_map(sms_corpus_clean, stripWhitespace)
+# visualize missing data
+library(Amelia)
+missmap(training.data.raw, main = "Missing values vs observed")
 
-sms_dtm <-DocumentTermMatrix(sms_corpus_clean)
-sms_data_train <- sms_dtm[1:4169, ]
-sms_data_test <- sms_dtm[4170:5559, ]
-sms_train_labels <- sms_raw[1:4169, ]$type
-sms_test_labels <- sms_raw[4170:5559, ]$type
+#subset the data
+data <- subset(training.data.raw, select=c(2,3,4,5))
 
-sms_freq_terms <- findFreqTerms(sms_data_train, 5)
-sms_data_freq_train <- sms_data_train[ , sms_freq_terms]
-sms_data_freq_test <- sms_data_test[ , sms_freq_terms]
-sms_train <- apply(sms_data_freq_train, MARGIN = 2, convert_counts)
-sms_test <- apply(sms_data_freq_test, MARGIN = 2, convert_counts)
+# substitute missing data with average
+data$F2[is.na(data$F2)] <- mean(data$F2, na.rm=T)
 
-sms_classifier_train2 <- naiveBayes(sms_train, sms_train_labels, laplace = 1)
-sms_test_pred2 <-predict(sms_classifier_train2, sms_test)
-CrossTable(sms_test_pred2, sms_test_labels, prop.chisq = FALSE, prop.t = FALSE, prop.r = FALSE,
-           dnn = c('predicted', 'actual'))
+# check factors
+is.factor(data$label)
+is.factor(data$F1)
+is.factor(data$F2)
+is.factor(data$F3)
 
-
-#spamlog <- glm(label~., data=df, family="binomial")
-#spamlog
+# check categorical variable encoding to understand the model
+contrasts(data$label)
+contrasts(data$F3)
 
 
