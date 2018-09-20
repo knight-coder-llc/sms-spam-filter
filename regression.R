@@ -71,7 +71,7 @@ train = training.data.raw
 test = test.data.raw
 
 # Model fitting
-model <- glm(label ~., family=binomial(link='logit'), data=train)
+model <- glm(label ~., family=subset(link='logit'), data=train)
 model
 #measure predictability ### errors
 #####################################
