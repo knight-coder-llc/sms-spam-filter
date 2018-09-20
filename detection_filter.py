@@ -60,9 +60,8 @@ def mostFrequentWords(data):
     item = counts.most_common(1)
     for index, value in enumerate(item):
         item = value[1]
-        
-    print(item)
-    #return item
+    #print(item)    
+    return item
     
 def preProcessMessage(data,stop_words = True, stemm = True, lower = True, grams = 2):
     #set the words to lowercase, this helps us to not deal with free or FREE as two different words 
@@ -93,12 +92,13 @@ def preProcessMessage(data,stop_words = True, stemm = True, lower = True, grams 
     return tokens
 
 def main():
-    featureFrame = []
+    trainfeatureFrame = []
+    testfeatureFrame = []
     #set column width to display data
     pd.set_option('display.max_colwidth', 100)
     #read file and create the dataframe
     data = pd.read_csv('./dataset/SMSSpamCollection.txt', sep='\t', quoting=csv.QUOTE_NONE, names=["label", "SMS Message"], encoding="utf8")
-    data = data.replace({"spam": 1, "ham": 0})
+    #data = data.replace({"spam": 1, "ham": 0})
     df = pd.DataFrame(data)
     
     #split the data into test and training set
@@ -114,38 +114,66 @@ def main():
     train.reset_index(inplace=True)
     train.drop(['index'], axis = 1, inplace=True)
     
+    test.reset_index(inplace=True)
+    test.drop(['index'], axis = 1, inplace=True)
     
     #wordcloud = WordCloud().generate_from_frequencies(train['SMS Message'])
     #print(wordcloud)
     
     #process messages before createing a word cloud for optimization
-    
     train['SMS Message'] = preProcessMessage(train['SMS Message'])
+    test['SMS Message'] = preProcessMessage(test['SMS Message'])
     
     for i in range(len(train)):
-      featureFrame.append(hasWebsite(train['SMS Message'][i]))
-     
+      trainfeatureFrame.append(hasWebsite(train['SMS Message'][i]))
+      
+    for i in range(len(test)): 
+      testfeatureFrame.append(hasWebsite(test['SMS Message'][i]))
     #append feature to the data frame
-    df2 = pd.DataFrame(featureFrame)
+    df2 = pd.DataFrame(trainfeatureFrame)
     train['F1'] = df2
-    print(train)
+    
+    df2 = pd.DataFrame(testfeatureFrame)
+    test['F1'] = df2
+    #print(train)
+    trainfeatureFrame = []
+    testfeatureFrame = []
     
     for i in range(len(train)):
-      featureFrame.append(messageLength(train['SMS Message'][i]))
-    
+      trainfeatureFrame.append(messageLength(train['SMS Message'][i]))
+      
+    for i in range(len(test)):
+      testfeatureFrame.append(messageLength(test['SMS Message'][i]))
+      
     #append feature to the data frame
-    df2 = pd.DataFrame(featureFrame)
+    df2 = pd.DataFrame(trainfeatureFrame)
     train['F2'] = df2
-    print(train)
+    
+    df2 = pd.DataFrame(testfeatureFrame)
+    test['F2'] = df2
+    #print(train)
+    trainfeatureFrame = []
+    testfeatureFrame = []
     
     for i in range(len(train)):
-        featureFrame.append(mostFrequentWords(train['SMS Message'][i]))
-    
+        trainfeatureFrame.append(mostFrequentWords(train['SMS Message'][i]))
+        
+    for i in range(len(test)):
+        testfeatureFrame.append(mostFrequentWords(test['SMS Message'][i]))
     #append feature to the data frame
-    df2 = pd.DataFrame(featureFrame)
+    df2 = pd.DataFrame(trainfeatureFrame)
     train['F3'] = df2
-    print(train)
     
+    df2 = pd.DataFrame(testfeatureFrame)
+    test['F3'] = df2
+    
+    #remove the sms message column
+    train = train.drop(['SMS Message'], axis = 1)
+    test = test.drop(['SMS Message'], axis = 1)
+    
+    #print(test)
+    #print(train)
+    #print(train.isna())
     #call feature 2
     
     
@@ -163,7 +191,7 @@ def main():
     #createWordCloud(data)
     
     #create and export the processed dataset?
-    #train.to_csv('./trainingData.csv', encoding='utf-8-sig')
-    #test.to_csv('./testData.csv', encoding='utf-8-sig')
+    train.to_csv('./trainingData.csv', encoding='utf-8-sig')
+    test.to_csv('./testData.csv', encoding='utf-8-sig')
     print('done')
 main()
