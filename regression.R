@@ -26,31 +26,31 @@ is.factor(data$Spamword)
 
 # check categorical variable encoding to understand the model
 contrasts(data$label)
-contrasts(data$F.WordCount)
+#contrasts(data$F.WordCount)
 
 # remove rows in F3 with NAs
 data <- data[!is.na(data$F.WordCount),]
 rownames(data) <- NULL
 
 #split the data for training and testing set
-train <- data[1: 2000,]
-test <- data[2001:4001,]
+train <- data[1: 2001,]
+test <- data[2002:4002,]
 test
 # Model fitting
-model <- glm(label ~., family=binomial(link='logit'), data=train)
+model <- glm(label ~ train$Website + train$Spamword, family=binomial(link='logit'), data=train)
 model
-
-#measure predictability ### errors
+#measure predictability ### 
 #####################################
-fitted.results <- predict(model, newdata=subset(test,select=c(2,3,4,5)), type='response')
+fitted.results <- predict(model, newdata=subset(test,select=test$Website + test$Spamword), type='response')
 fitted.results
 fitted.results <- ifelse(fitted.results > 0.5, 1, 0)
 fitted.results
 library(ROCR)
 # ROC and AUC
-p <- predict(model, newdata=subset(test,select=c(2,3,4,5)),type='response')
+p <- predict(model, newdata=test,type='response')
 pr <- prediction(p, test$label)
 prf <- performance(pr, measure = "tpr", x.measure = "fpr")
 plot(prf)
 
 auc <- performance(pr, measure = "auc")
+auc
