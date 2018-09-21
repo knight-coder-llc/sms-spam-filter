@@ -33,24 +33,33 @@ data <- data[!is.na(data$F.WordCount),]
 rownames(data) <- NULL
 
 #split the data for training and testing set
-train <- data[1: 2001,]
-test <- data[2002:4002,]
-test
+train <- data[1: 2501,]
+test <- data[2502:5002,]
+
 # Model fitting
 model <- glm(label ~ train$Website + train$Spamword, family=binomial(link='logit'), data=train)
 model
 #measure predictability ### 
 #####################################
 fitted.results <- predict(model, newdata=subset(test,select=test$Website + test$Spamword), type='response')
-fitted.results
-fitted.results <- ifelse(fitted.results > 0.5, 1, 0)
-fitted.results
+
+fitted.results <- ifelse(fitted.results > 0.9, 1, 0)
+
+fitted.results.errors <- mean(fitted.results != test$Website + test$Spamword)
+fitted.results.accuracy <- 1 - fitted.results.errors
+print(paste('Model Accuracy =', round(fitted.results.accuracy*100, 2), "%"))
+
 library(ROCR)
+library(caret)
 # ROC and AUC
-p <- predict(model, newdata=test,type='response')
+p <- predict(model, newdata=subset(test,select= test$Website + test$Spamword),type='response')
+summary(p)
+
+acc <- ifelse(p > .50, "ham", "spam")
+confusionMatrix(acc, test$label) 
+
 pr <- prediction(p, test$label)
 prf <- performance(pr, measure = "tpr", x.measure = "fpr")
 plot(prf)
 
 auc <- performance(pr, measure = "auc")
-auc
