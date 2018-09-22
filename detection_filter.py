@@ -14,9 +14,13 @@ from wordcloud import WordCloud
 from nltk.stem.snowball import SnowballStemmer
 from nltk.corpus import stopwords
 from collections import Counter
-from sklearn.feature_extraction.text import TfidfVectorizer  
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+import sklearn as sk  
 import pandas as pd
 import csv
+import arff
 
 #create spam word cloud
 def createWordCloud(data):
@@ -63,7 +67,6 @@ def hasWebsite(data):
 #check for the most frequent words
 def mostFrequentWords(data, word=True):   
     counts = Counter(data)
-    
     if(word):
         item = counts.most_common(1)
         for index, value in enumerate(item):
@@ -77,6 +80,8 @@ def mostFrequentWords(data, word=True):
         for index, value in enumerate(item):
             item = value[0]
         return item
+
+
 
 def wordCount(data):
     length = len(data)
@@ -105,7 +110,7 @@ def spamWords(data):
     return spamList'''
 
 def preProcessMessage(data,stop_words = True, stemm = True, lower = True, grams = 2, tokenize = True, punctuation = True):
-    spamlist = []
+    
     # convert to string if needed
     '''if(toString):
         data = data.apply(lambda x: ' '.join(x))'''
@@ -153,13 +158,36 @@ def preProcessMessage(data,stop_words = True, stemm = True, lower = True, grams 
             tokens[index] = [stemmer.stem(token) for token in value]
             
     if tokenize:
-        return tokens, spamlist
-    return data, spamlist
+        return tokens
+    return data
+
+def create_dictionary(data):
+    '''data = '' + data.apply(lambda x: ' '.join(x))
+    
+    vectorizer = TfidfVectorizer(any(data),ngram_range=(1,2),encoding="utf-8", lowercase=False, strip_accents="unicode", stop_words="english", norm= 'l2')
+    #
+    train = vectorizer.fit_transform(data)
+    train_x, test_x, train_y, test_y = train_test_split(train[1], train[0])
+    classifier = LogisticRegression()
+    classifier.fit(train_x, train)
+    
+    print(vectorizer.vocabulary_)
+    '''#counts = Counter(data)
+    
+    '''items = []
+    for i in range(len(data)):
+        counts = Counter(data[i])    
+        item = counts.most_common(1)
+        items.append(item)'''
+
+    #print(counts.most_common(3000))
 
 def main():
     
     featureFrame = []
-    #spamList = []
+    
+    
+    
     #set column width to display data
     pd.set_option('display.max_colwidth', 100)
     #read file and create the dataframe
@@ -169,7 +197,10 @@ def main():
     
     
     #need to tokenize before searching a url and convert to lowercase
-    df['SMS Message'], spamList = preProcessMessage(df['SMS Message'])
+    df['SMS Message'] = preProcessMessage(df['SMS Message'])
+    
+    #create_dictionary(df['SMS Message'])
+    #print(spamList)
     
     for i in range(len(df)):
       featureFrame.append(hasWebsite(df['SMS Message'][i]))
@@ -219,5 +250,10 @@ def main():
     
     #create and export the processed dataset?
     df.to_csv('./SpamProcessedData.csv', encoding='utf-8-sig')
+    
+    #translate the message data back to string values for arff.dump
+    df['SMS Message'] = '' + df['SMS Message'].apply(lambda x: ' '.join(x))
+    arff.dump('SpamWeka.arff', df.values , relation="SpamDetection", names=df.columns)
+    
     print('done')
 main()

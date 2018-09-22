@@ -38,7 +38,7 @@ train <- data[1: 2501,]
 test <- data[2502:5002,]
 
 # Model fitting
-model <- glm(train$label ~ train$Spamword + train$Website + train$W.count + train$F.WordCount, family=binomial(), data=train)
+model <- glm(train$label ~ train$Spamword + train$Website + train$W.count + train$F.WordCount, family=binomial(), data=train, fun = list(median,train$Spamword))
 #model
 #measure predictability ### 
 #####################################
