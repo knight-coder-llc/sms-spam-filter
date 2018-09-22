@@ -56,7 +56,7 @@ def checkUpper(data):
 def hasWebsite(data):
     #print(data)
     for index, value in enumerate(data):
-        if(value.startswith('www') or value.startswith('http//') or value.startswith('ftp//')):
+        if(value.startswith('www') or value.startswith('http//') or value.startswith('https//') or value.startswith('ftp//')):
             return 1
     return 0
 
@@ -67,8 +67,10 @@ def mostFrequentWords(data, word=True):
     if(word):
         item = counts.most_common(1)
         for index, value in enumerate(item):
-            item = value[1]    
-        return item
+            item = value[1]
+            if item >= 3:
+                return 1
+        return 0
     else:
         #return string literal word
         item = counts.most_common(1)
@@ -77,7 +79,11 @@ def mostFrequentWords(data, word=True):
         return item
 
 def wordCount(data):
-    return len(data)
+    length = len(data)
+    
+    if length > 10:
+        return 1
+    return 0
  
 
 #spam word checker

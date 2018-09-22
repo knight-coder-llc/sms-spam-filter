@@ -38,16 +38,16 @@ train <- data[1: 2501,]
 test <- data[2502:5002,]
 
 # Model fitting
-model <- glm(train$label ~ train$Spamword + train$Website, family=binomial(), data=train)
-model
+model <- glm(train$label ~ train$Spamword + train$Website + train$W.count + train$F.WordCount, family=binomial(), data=train)
+#model
 #measure predictability ### 
 #####################################
-new <- data.frame(testset = test$Spamword + test$Website)
+new <- data.frame(testset = test$Spamword + test$Website + test$W.count + test$F.WordCount)
 fitted.results <- predict(model, newdata=new, type='response')
 
 fitted.results <- ifelse(fitted.results > 0.5, "1", "0")
 fitted.results
-fitted.results.errors <- mean(fitted.results != test$Spamword)
+fitted.results.errors <- mean(fitted.results != test$label)
 fitted.results.accuracy <- 1 - fitted.results.errors
 print(paste('Model Accuracy =', round(fitted.results.accuracy*100, 2), "%"))
 
@@ -58,10 +58,11 @@ p <- predict(model, test ,type='response')
 #summary(p)
 #predict(model, type="response")
 
-acc <- ifelse(p > .50, 0, 1)
+acc <- ifelse(p > .5, 0, 1)
 confusionMatrix(acc, test$label, positive="1") 
 
 pr <- prediction(p, test$label)
+summary(pr)
 prf <- performance(pr, measure = "tpr", x.measure = "fpr")
 plot(prf)
 
