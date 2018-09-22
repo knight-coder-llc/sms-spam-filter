@@ -38,11 +38,12 @@ train <- data[1: 2501,]
 test <- data[2502:5002,]
 
 # Model fitting
-model <- glm(train$label ~ train$Spamword + train$Website + train$W.count, family=binomial(), data=train)
+model <- glm(train$label ~ train$Spamword + train$Website, family=binomial(), data=train)
 model
 #measure predictability ### 
 #####################################
-fitted.results <- predict(model, newdata=test$label, type='response')
+new <- data.frame(testset = test$Spamword + test$Website)
+fitted.results <- predict(model, newdata=new, type='response')
 
 fitted.results <- ifelse(fitted.results > 0.5, "1", "0")
 fitted.results

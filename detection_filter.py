@@ -78,19 +78,28 @@ def mostFrequentWords(data, word=True):
 
 def wordCount(data):
     return len(data)
-    
+ 
+
 #spam word checker
 def spamWords(data):
-    #print(data)
+    
     spamWordList = ['free', 'urgent', 'call', 'freemsg', 'mob', 'txt', 'entry','reply','claim','download', '2']
     
     if any(map(lambda each: each in data, spamWordList)) == True:
         return 1
     else:
         return 0
+
+'''def vectorize(data):
     
-def preProcessMessage(data,stop_words = True, stemm = False, lower = True, grams = 1, tokenize = True, punctuation = True):
-    
+    vectorizer = TfidfVectorizer(any(data),ngram_range=(1,2),encoding="utf-8", lowercase=False, strip_accents="unicode", stop_words="english", norm= 'l1')
+    vectorizer.fit_transform(data)
+        
+    spamList = vectorizer.get_feature_names()
+    return spamList'''
+
+def preProcessMessage(data,stop_words = True, stemm = True, lower = True, grams = 2, tokenize = True, punctuation = True):
+    spamlist = []
     # convert to string if needed
     '''if(toString):
         data = data.apply(lambda x: ' '.join(x))'''
@@ -99,24 +108,32 @@ def preProcessMessage(data,stop_words = True, stemm = False, lower = True, grams
     if(lower):
         data = data.str.lower()
     
+    #use n-grams to improve accuracy
+    if(grams > 1):
+        '''token = []
+        for i in range(len(tokens)):
+            for j in range(len(tokens[i])):
+                token += [' '.join(tokens[i][j])]
+        #print(tokens)'''
+        
+        
+        '''vectorizer = TfidfVectorizer(any(data),ngram_range=(1,2),encoding="utf-8", lowercase=False, strip_accents="unicode", stop_words="english", norm= 'l1')
+        vectorizer.fit_transform(data)
+        
+        spamlist = vectorizer.get_feature_names()'''
+        
     #remove punctuations
     if(punctuation):
         data = data.str.translate(str.maketrans("","",'<>|-[]_.:;,!?&()''""\\'))
          
+    
+        
     #tokenize the data    
     if(tokenize):
         tokens = [lang.word_tokenize(token) for token in data]
 
-    #use n-grams to improve accuracy
-    if(grams > 1):
-        token = []
-        '''for i in range(len(tokens)):
-            for j in range(len(tokens[i])):
-                token += [' '.join(tokens[i][j])]
-        #print(tokens)
-        vectorizer = TfidfVectorizer(any(data),ngram_range=(1,2),encoding="utf-8", lowercase=False, strip_accents="unicode", stop_words="english")
-        token = vectorizer.fit_transform(data)
-        print(token)'''
+    
+        #print(token)
     #remove the stopwords to improve efficiency
     if(stop_words):
         stop = stopwords.words('english')
@@ -130,12 +147,13 @@ def preProcessMessage(data,stop_words = True, stemm = False, lower = True, grams
             tokens[index] = [stemmer.stem(token) for token in value]
             
     if tokenize:
-        return tokens
-    return data
+        return tokens, spamlist
+    return data, spamlist
 
 def main():
     
     featureFrame = []
+    #spamList = []
     #set column width to display data
     pd.set_option('display.max_colwidth', 100)
     #read file and create the dataframe
@@ -145,7 +163,7 @@ def main():
     
     
     #need to tokenize before searching a url and convert to lowercase
-    df['SMS Message'] = preProcessMessage(df['SMS Message'])
+    df['SMS Message'], spamList = preProcessMessage(df['SMS Message'])
     
     for i in range(len(df)):
       featureFrame.append(hasWebsite(df['SMS Message'][i]))
