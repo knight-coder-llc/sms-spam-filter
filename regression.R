@@ -12,51 +12,53 @@ library(Amelia)
 missmap(training.data.raw, main = "Missing values vs observed")
 
 #subset the data
-data <- subset(training.data.raw, select=c(2,4,5,6,7))
-
+data <- training.data.raw
+data$label
 # substitute missing data with average
-data$F.WordCount[is.na(data$F.WordCount)] <- mean(data$F.WordCount, na.rm=T)
+#data$F.WordCount[is.na(data$F.WordCount)] <- mean(data$F.WordCount, na.rm=T)
 
 # check factors
-is.factor(data$label)
-is.factor(data$Website)
-is.factor(data$W.count)
-is.factor(data$F.WordCount)
-is.factor(data$Spamword)
+#is.factor(data$label)
+#is.factor(data$Website)
+#is.factor(data$W.count)
+#is.factor(data$F.WordCount)
+#is.factor(data$Spamword)
 
 # check categorical variable encoding to understand the model
-contrasts(data$label)
+#factor(data$label)
+#contrasts(data$label)
 #contrasts(data$F.WordCount)
 
 # remove rows in F3 with NAs
-data <- data[!is.na(data$F.WordCount),]
-rownames(data) <- NULL
+#data <- data[!is.na(data$F.WordCount),]
+#rownames(data) <- NULL
 
 #split the data for training and testing set
 train <- data[1: 2501,]
 test <- data[2502:5002,]
 
 # Model fitting
-model <- glm(label ~ train$Website + train$Spamword, family=binomial(link='logit'), data=train)
+model <- glm(train$label ~ train$Spamword + train$Website + train$W.count, family=binomial(), data=train)
 model
 #measure predictability ### 
 #####################################
-fitted.results <- predict(model, newdata=subset(test,select=test$Website + test$Spamword), type='response')
+fitted.results <- predict(model, newdata=test$label, type='response')
 
-fitted.results <- ifelse(fitted.results > 0.9, 1, 0)
-
-fitted.results.errors <- mean(fitted.results != test$Website + test$Spamword)
+fitted.results <- ifelse(fitted.results > 0.5, "1", "0")
+fitted.results
+fitted.results.errors <- mean(fitted.results != test$Spamword)
 fitted.results.accuracy <- 1 - fitted.results.errors
 print(paste('Model Accuracy =', round(fitted.results.accuracy*100, 2), "%"))
 
 library(ROCR)
 library(caret)
 # ROC and AUC
-p <- predict(model, newdata=subset(test,select= test$Website + test$Spamword),type='response')
-summary(p)
+p <- predict(model, test ,type='response')
+#summary(p)
+#predict(model, type="response")
 
-acc <- ifelse(p > .50, "ham", "spam")
-confusionMatrix(acc, test$label) 
+acc <- ifelse(p > .50, 0, 1)
+confusionMatrix(acc, test$label, positive="1") 
 
 pr <- prediction(p, test$label)
 prf <- performance(pr, measure = "tpr", x.measure = "fpr")

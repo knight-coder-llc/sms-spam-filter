@@ -136,7 +136,7 @@ def main():
     pd.set_option('display.max_colwidth', 100)
     #read file and create the dataframe
     data = pd.read_csv('./dataset/SMSSpamCollection.txt', sep='\t', quoting=csv.QUOTE_NONE, names=["label", "SMS Message"], encoding="utf8")
-    #data = data.replace({"spam": 1, "ham": 0})
+    data = data.replace({"spam": 1, "ham": 0})
     df = pd.DataFrame(data)
     
     
