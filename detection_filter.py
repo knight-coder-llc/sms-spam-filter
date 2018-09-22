@@ -14,6 +14,7 @@ from wordcloud import WordCloud
 from nltk.stem.snowball import SnowballStemmer
 from nltk.corpus import stopwords
 from collections import Counter
+from sklearn.feature_extraction.text import TfidfVectorizer  
 import pandas as pd
 import csv
 
@@ -109,10 +110,13 @@ def preProcessMessage(data,stop_words = True, stemm = False, lower = True, grams
     #use n-grams to improve accuracy
     if(grams > 1):
         token = []
-        for i in range(len(tokens)):
+        '''for i in range(len(tokens)):
             for j in range(len(tokens[i])):
                 token += [' '.join(tokens[i][j])]
-                
+        #print(tokens)
+        vectorizer = TfidfVectorizer(any(data),ngram_range=(1,2),encoding="utf-8", lowercase=False, strip_accents="unicode", stop_words="english")
+        token = vectorizer.fit_transform(data)
+        print(token)'''
     #remove the stopwords to improve efficiency
     if(stop_words):
         stop = stopwords.words('english')
