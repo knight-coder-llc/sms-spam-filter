@@ -101,19 +101,7 @@ def spamWords(data):
     else:
         return 0
 
-'''def vectorize(data):
-    
-    vectorizer = TfidfVectorizer(any(data),ngram_range=(1,2),encoding="utf-8", lowercase=False, strip_accents="unicode", stop_words="english", norm= 'l1')
-    vectorizer.fit_transform(data)
-        
-    spamList = vectorizer.get_feature_names()
-    return spamList'''
-
 def preProcessMessage(data,stop_words = True, stemm = True, lower = True, grams = 2, tokenize = True, punctuation = True):
-    
-    # convert to string if needed
-    '''if(toString):
-        data = data.apply(lambda x: ' '.join(x))'''
     
     #set the words to lowercase, lists and series is tricky 
     if(lower):
@@ -161,6 +149,7 @@ def preProcessMessage(data,stop_words = True, stemm = True, lower = True, grams 
         return tokens
     return data
 
+#testing thinking about implementing naive bayes theorm
 def create_dictionary(data):
     '''data = '' + data.apply(lambda x: ' '.join(x))
     
@@ -181,6 +170,7 @@ def create_dictionary(data):
         items.append(item)'''
 
     #print(counts.most_common(3000))
+
 def featureExtract(df, action=None):
     featureFrame = []
     for i in range(len(df)):
@@ -191,15 +181,12 @@ def featureExtract(df, action=None):
 
 def main():
     
-    featureFrame = []
-    
     #set column width to display data
     pd.set_option('display.max_colwidth', 100)
     #read file and create the dataframe
     data = pd.read_csv('./dataset/SMSSpamCollection.txt', sep='\t', quoting=csv.QUOTE_NONE, names=["label", "SMS Message"], encoding="utf8")
     data = data.replace({"spam": 1, "ham": 0})
     df = pd.DataFrame(data)
-    
     
     #need to tokenize before searching a url and convert to lowercase
     df['SMS Message'] = preProcessMessage(df['SMS Message'])
@@ -208,57 +195,6 @@ def main():
     df['W-count'] = featureExtract(df,wordCount)
     df['F-WordCount'] = featureExtract(df,mostFrequentWords)
     df['Spamword'] = featureExtract(df,spamWords)
-    
-    #create_dictionary(df['SMS Message'])
-    #print(spamList)
-    
-    '''for i in range(len(df)):
-      featureFrame.append(hasWebsite(df['SMS Message'][i]))
-    
-    #append feature to the data frame
-    df2 = pd.DataFrame(featureFrame)
-    df['Website'] = df2
-    
-    featureFrame = []
-    
-    #word count
-    for i in range(len(df)):
-        featureFrame.append(wordCount(df['SMS Message'][i]))
-    
-    df2 = pd.DataFrame(featureFrame)
-    df['W-count'] = df2
-    
-    featureFrame = []
-    
-    #get most frequent word count, data is a list
-    for i in range(len(df)):
-        featureFrame.append(mostFrequentWords(df['SMS Message'][i]))
-    
-    #append feature to the data frame
-    df2 = pd.DataFrame(featureFrame)
-    df['F-WordCount'] = df2
-    
-    featureFrame = []
-    
-    #spam word detector
-    for i in range(len(df)):
-        featureFrame.append(spamWords(df['SMS Message'][i]))
-    
-    df2 = pd.DataFrame(featureFrame)
-    df['Spamword'] = df2
-    
-    featureFrame = []
-    
-    #get most frequent word
-    for i in range(len(df)):
-        featureFrame.append(mostFrequentWords(df['SMS Message'][i], False))
-    
-    df2 = pd.DataFrame(featureFrame)
-    df['F-word'] = df2
-    
-    featureFrame = []'''
-    
-    
     
     #create and export the processed dataset?
     df.to_csv('./SpamProcessedData.csv', encoding='utf-8-sig')
