@@ -219,7 +219,7 @@ def processEmail(data, body, label):
                 negativetotal += 1
         
     pA, pNa = naive_bayes(data)
-    print(trainNegative['jurong'])
+    #print(trainNegative['jurong'])
     #for i in range(len(data['SMSMessage'])):
     classify(tokens, pA, pNa, positivetotal, negativetotal, trainPositive,trainNegative)
 
@@ -230,13 +230,22 @@ def conditionalWord(word, spam, positivetotal, negativetotal, tp, tn):
         if word in tp:
             return tp[word]/float(positivetotal)
         else:
+            return tn[word]/float(positivetotal)
+    else:
+        if word in tn:
             return tn[word]/float(negativetotal)
+        else:
+           return tp[word]/float(positivetotal)
         
 #not understanding how I am getting a non type error
 def conditionalEmail(body, spam, pT, nT, tp, tn):
     result = 1.0
     for word in body:
-        result += conditionalWord(word, spam, pT, nT, tp, tn)
+        if conditionalWord(word, spam, pT, nT, tp, tn) == None:
+            result += 1.0
+            conditionalWord(word, spam, pT, nT, tp, tn)
+        else:
+            result += conditionalWord(word, spam, pT, nT, tp, tn)
     return result
 
 def classify(email, pA, pNa, pT, nT, tp, tn):
@@ -246,11 +255,12 @@ def classify(email, pA, pNa, pT, nT, tp, tn):
     for i in range(len(email)):
         isSpam = pA * conditionalEmail(email[i], True, pT, nT, tp, tn)
         notSpam = pNa * conditionalEmail(email[i], False, pT, nT, tp, tn)
+        
         if isSpam > notSpam:
             result.append(1)
         else:
             result.append(0)
-    return result
+    print(result)
 
 def main():
     
@@ -262,7 +272,7 @@ def main():
     df = pd.DataFrame(data)
     
     isSpam = processEmail(df,df['SMSMessage'][1], df['label'][1]) 
-    print(isSpam)
+    #print(isSpam)
     '''#need to tokenize before searching a url and convert to lowercase
     df['SMSMessage'] = preProcessMessage(df['SMSMessage'])
     
