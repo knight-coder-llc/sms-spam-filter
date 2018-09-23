@@ -1,4 +1,4 @@
-﻿,label,SMS Message,Website,W-count,F-WordCount,Spamword
+﻿,label,SMSMessage,Website,W-count,F-WordCount,Spamword
 0,0,"['go', 'jurong', 'point', 'crazi', 'avail', 'bugi', 'n', 'great', 'world', 'la', 'e', 'buffet', 'cine', 'got', 'amor', 'wat']",0,1,0,0
 1,0,"['ok', 'lar', 'joke', 'wif', 'u', 'oni']",0,0,0,0
 2,1,"['free', 'entri', '2', 'wkli', 'comp', 'win', 'fa', 'cup', 'final', 'tkts', '21st', 'may', '2005', 'text', 'fa', '87121', 'receiv', 'entri', 'questionstd', 'txt', 'ratetc', ""'s"", 'appli', '08452810075over18', ""'s""]",0,1,0,1

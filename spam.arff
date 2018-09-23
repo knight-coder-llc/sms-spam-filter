@@ -1,6 +1,6 @@
 @relation spam
 @attribute label integer
-@attribute SMS Message string
+@attribute SMSMessage string
 @attribute Website integer
 @attribute W-count integer
 @attribute F-WordCount integer

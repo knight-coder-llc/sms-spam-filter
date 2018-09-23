@@ -24,7 +24,7 @@ import arff
 
 #create spam word cloud
 def createWordCloud(data):
-    s_words = ' '.join(list(data[data['label'] == 1]['SMS Message']))
+    s_words = ' '.join(list(data[data['label'] == 1]['SMSMessage']))
     word_count = WordCloud(width = 512, height = 512).generate(s_words)
     plot.figure(figsize = (10, 8), facecolor = 'k')
     plot.imshow(word_count)
@@ -34,7 +34,7 @@ def createWordCloud(data):
     plot.show()
     print('\n')
     #create ham word cloud
-    h_words = ' '.join(list(data[data['label'] == 0]['SMS Message']))
+    h_words = ' '.join(list(data[data['label'] == 0]['SMSMessage']))
     word_count = WordCloud(width = 512, height = 512).generate(h_words)
     plot.figure(figsize = (10, 8), facecolor = 'k')
     plot.imshow(word_count)
@@ -174,22 +174,97 @@ def create_dictionary(data):
 def featureExtract(df, action=None):
     featureFrame = []
     for i in range(len(df)):
-      featureFrame.append(action(df['SMS Message'][i]))
+      featureFrame.append(action(df['SMSMessage'][i]))
       
     return featureFrame
     
+trainPositive = {}
+trainNegative = {}
+
+
+
+def naive_bayes(data):
+    pA = float(0)
+    pNa = float(0)
+    
+    total = 0
+    numSpam = 0
+    for email in data['label']:
+        if email == 1:
+            numSpam += 1
+        total += 1
+    
+    pA = numSpam / float(total) 
+    pNa = (total - numSpam)/float(total)
+    
+    return pA, pNa
+
+ 
+
+    
+def processEmail(data, body, label):
+    positivetotal = 0
+    negativetotal = 0
+    
+    tokens = [lang.word_tokenize(token) for token in data['SMSMessage']]
+    
+    #get total ham and total spam, needs to be tokenized
+    for i in range(len(tokens)):
+        for index, word in enumerate(tokens[i]):
+            if data['label'][i] == 1:
+                trainPositive[word] = trainPositive.get(word, 0) + 1
+                positivetotal += 1   
+            else:
+                trainNegative[word] = trainNegative.get(word, 0) + 1
+                negativetotal += 1
+        
+    pA, pNa = naive_bayes(data)
+    print(trainNegative['jurong'])
+    #for i in range(len(data['SMSMessage'])):
+    classify(tokens, pA, pNa, positivetotal, negativetotal, trainPositive,trainNegative)
+
+#need to figure out what this is doing with tp word
+def conditionalWord(word, spam, positivetotal, negativetotal, tp, tn):
+
+    if spam:
+        if word in tp:
+            return tp[word]/float(positivetotal)
+        else:
+            return tn[word]/float(negativetotal)
+        
+#not understanding how I am getting a non type error
+def conditionalEmail(body, spam, pT, nT, tp, tn):
+    result = 1.0
+    for word in body:
+        result += conditionalWord(word, spam, pT, nT, tp, tn)
+    return result
+
+def classify(email, pA, pNa, pT, nT, tp, tn):
+    result = []
+
+    #tokens passed, bug somewhere here in the passing of tp and tn
+    for i in range(len(email)):
+        isSpam = pA * conditionalEmail(email[i], True, pT, nT, tp, tn)
+        notSpam = pNa * conditionalEmail(email[i], False, pT, nT, tp, tn)
+        if isSpam > notSpam:
+            result.append(1)
+        else:
+            result.append(0)
+    return result
 
 def main():
     
     #set column width to display data
     pd.set_option('display.max_colwidth', 100)
     #read file and create the dataframe
-    data = pd.read_csv('./dataset/SMSSpamCollection.txt', sep='\t', quoting=csv.QUOTE_NONE, names=["label", "SMS Message"], encoding="utf8")
+    data = pd.read_csv('./dataset/SMSSpamCollection.txt', sep='\t', quoting=csv.QUOTE_NONE, names=["label", "SMSMessage"], encoding="utf8")
     data = data.replace({"spam": 1, "ham": 0})
     df = pd.DataFrame(data)
     
-    #need to tokenize before searching a url and convert to lowercase
-    df['SMS Message'] = preProcessMessage(df['SMS Message'])
+    isSpam = processEmail(df,df['SMSMessage'][1], df['label'][1]) 
+    print(isSpam)
+    '''#need to tokenize before searching a url and convert to lowercase
+    df['SMSMessage'] = preProcessMessage(df['SMSMessage'])
     
     df['Website'] = featureExtract(df,hasWebsite)
     df['W-count'] = featureExtract(df,wordCount)
@@ -200,10 +275,10 @@ def main():
     df.to_csv('./SpamProcessedData.csv', encoding='utf-8-sig')
     
     #translate the message data back to string values for arff.dump
-    df['SMS Message'] = '' + df['SMS Message'].apply(lambda x: ' '.join(x))
-    #df.drop(['SMS Message'], axis=1)
+    df['SMSMessage'] = '' + df['SMSMessage'].apply(lambda x: ' '.join(x))
+    #df.drop(['SMSMessage'], axis=1)
     arff.dump('spam.arff',df.values , relation="spam", names=df.columns)
-    #print(arff.dumps('spam.arff',df.values, relation="spam"))
+    #print(arff.dumps('spam.arff',df.values, relation="spam"))'''
     
     print('done')
 main()
