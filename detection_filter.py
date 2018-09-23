@@ -181,12 +181,17 @@ def create_dictionary(data):
         items.append(item)'''
 
     #print(counts.most_common(3000))
+def featureExtract(df, action=None):
+    featureFrame = []
+    for i in range(len(df)):
+      featureFrame.append(action(df['SMS Message'][i]))
+      
+    return featureFrame
+    
 
 def main():
     
     featureFrame = []
-    
-    
     
     #set column width to display data
     pd.set_option('display.max_colwidth', 100)
@@ -199,10 +204,15 @@ def main():
     #need to tokenize before searching a url and convert to lowercase
     df['SMS Message'] = preProcessMessage(df['SMS Message'])
     
+    df['Website'] = featureExtract(df,hasWebsite)
+    df['W-count'] = featureExtract(df,wordCount)
+    df['F-WordCount'] = featureExtract(df,mostFrequentWords)
+    df['Spamword'] = featureExtract(df,spamWords)
+    
     #create_dictionary(df['SMS Message'])
     #print(spamList)
     
-    for i in range(len(df)):
+    '''for i in range(len(df)):
       featureFrame.append(hasWebsite(df['SMS Message'][i]))
     
     #append feature to the data frame
@@ -246,14 +256,18 @@ def main():
     df2 = pd.DataFrame(featureFrame)
     df['F-word'] = df2
     
-    featureFrame = []
+    featureFrame = []'''
+    
+    
     
     #create and export the processed dataset?
     df.to_csv('./SpamProcessedData.csv', encoding='utf-8-sig')
     
     #translate the message data back to string values for arff.dump
-    df['SMS Message'] = '' + df['SMS Message'].apply(lambda x: ' '.join(x))
-    arff.dump('SpamWeka.arff', df.values , relation="SpamDetection", names=df.columns)
+    #df['SMS Message'] = '' + df['SMS Message'].apply(lambda x: ' '.join(x))
+    df.drop(df['SMS Message'], axis=1)
+    arff.dump('spam.arff',df.values , relation="spam", names=df.columns)
+    #print(arff.dumps('spam.arff',df.values, relation="spam"))
     
     print('done')
 main()
