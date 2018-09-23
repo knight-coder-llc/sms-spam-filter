@@ -264,8 +264,8 @@ def main():
     df.to_csv('./SpamProcessedData.csv', encoding='utf-8-sig')
     
     #translate the message data back to string values for arff.dump
-    #df['SMS Message'] = '' + df['SMS Message'].apply(lambda x: ' '.join(x))
-    df.drop(df['SMS Message'], axis=1)
+    df['SMS Message'] = '' + df['SMS Message'].apply(lambda x: ' '.join(x))
+    #df.drop(['SMS Message'], axis=1)
     arff.dump('spam.arff',df.values , relation="spam", names=df.columns)
     #print(arff.dumps('spam.arff',df.values, relation="spam"))
     
