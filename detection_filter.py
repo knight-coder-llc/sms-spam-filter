@@ -17,6 +17,7 @@ from collections import Counter
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
 import sklearn as sk  
 import pandas as pd
 import csv
@@ -92,9 +93,9 @@ def wordCount(data):
  
 
 #spam word checker
-def spamWords(data):
+def spamWords(data, spam):
     
-    spamWordList = ['free', 'urgent', 'call', 'freemsg', 'mob', 'txt', 'entry','reply','claim','download', '2']
+    #spamWordList = ['free', 'urgent', 'call', 'freemsg', 'mob', 'txt', 'entry','reply','claim','download', '2']
     
     if any(map(lambda each: each in data, spamWordList)) == True:
         return 1
@@ -148,6 +149,7 @@ def preProcessMessage(data,stop_words = True, stemm = True, lower = True, grams 
     if tokenize:
         return tokens
     return data
+
 
 #testing thinking about implementing naive bayes theorm
 def create_dictionary(data):
@@ -207,60 +209,53 @@ def processEmail(data, body, label):
     negativetotal = 0
     
     tokens = [lang.word_tokenize(token) for token in data['SMSMessage']]
-    
+    itemsPos = []
+    itemsNeg = []
     #get total ham and total spam, needs to be tokenized
     for i in range(len(tokens)):
         for index, word in enumerate(tokens[i]):
+           
             if data['label'][i] == 1:
                 trainPositive[word] = trainPositive.get(word, 0) + 1
+                #seperate the data
+                itemsPos.append(tokens[i])
                 positivetotal += 1   
             else:
                 trainNegative[word] = trainNegative.get(word, 0) + 1
+                #seperate the data
+                itemsNeg.append(tokens[i])
                 negativetotal += 1
-        
+    
     pA, pNa = naive_bayes(data)
-    #print(trainNegative['jurong'])
-    #for i in range(len(data['SMSMessage'])):
-    classify(tokens, pA, pNa, positivetotal, negativetotal, trainPositive,trainNegative)
+    return trainPositive
+    #classify(itemsPos, itemsNeg, pA, pNa, positivetotal, negativetotal, trainPositive,trainNegative)
 
 #need to figure out what this is doing with tp word
-def conditionalWord(word, spam, positivetotal, negativetotal, tp, tn):
-
-    if spam:
-        if word in tp:
-            return tp[word]/float(positivetotal)
-        else:
-            return tn[word]/float(positivetotal)
-    else:
-        if word in tn:
-            return tn[word]/float(negativetotal)
-        else:
-           return tp[word]/float(positivetotal)
+def conditionalWord(word, total, tp_n):
+    return tp_n[word]/float(total) 
         
 #not understanding how I am getting a non type error
-def conditionalEmail(body, spam, pT, nT, tp, tn):
+def conditionalEmail(body, total, tp_n):
     result = 1.0
     for word in body:
-        if conditionalWord(word, spam, pT, nT, tp, tn) == None:
-            result += 1.0
-            conditionalWord(word, spam, pT, nT, tp, tn)
-        else:
-            result += conditionalWord(word, spam, pT, nT, tp, tn)
+          result += conditionalWord(word, total, tp_n)
     return result
 
-def classify(email, pA, pNa, pT, nT, tp, tn):
-    result = []
+def classify(emailPos, emailNeg, pA, pNa, pT, nT, tp, tn):
 
     #tokens passed, bug somewhere here in the passing of tp and tn
-    for i in range(len(email)):
-        isSpam = pA * conditionalEmail(email[i], True, pT, nT, tp, tn)
-        notSpam = pNa * conditionalEmail(email[i], False, pT, nT, tp, tn)
-        
-        if isSpam > notSpam:
+    for i in range(len(emailPos)):
+        isSpam = pA * conditionalEmail(emailPos[i], pT, tp)
+        print(isSpam)
+    for i in range(len(emailNeg)):
+        notSpam = pNa * conditionalEmail(emailNeg[i], nT, tn)
+        #print(notSpam)
+        '''if isSpam > notSpam:
             result.append(1)
         else:
-            result.append(0)
-    print(result)
+            result.append(0)'''
+    #print(isSpam)
+    #print(notSpam)
 
 def main():
     
@@ -273,13 +268,13 @@ def main():
     
     isSpam = processEmail(df,df['SMSMessage'][1], df['label'][1]) 
     #print(isSpam)
-    '''#need to tokenize before searching a url and convert to lowercase
+    #need to tokenize before searching a url and convert to lowercase
     df['SMSMessage'] = preProcessMessage(df['SMSMessage'])
     
     df['Website'] = featureExtract(df,hasWebsite)
     df['W-count'] = featureExtract(df,wordCount)
     df['F-WordCount'] = featureExtract(df,mostFrequentWords)
-    df['Spamword'] = featureExtract(df,spamWords)
+    df['Spamword'] = featureExtract(df,spamWords, isSpam)
     
     #create and export the processed dataset?
     df.to_csv('./SpamProcessedData.csv', encoding='utf-8-sig')
