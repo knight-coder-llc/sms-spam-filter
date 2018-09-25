@@ -15,9 +15,13 @@ from nltk.stem.snowball import SnowballStemmer
 from nltk.corpus import stopwords
 from collections import Counter
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction import DictVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import accuracy_score
+from sklearn.feature_extraction.text import CountVectorizer
+
 import sklearn as sk  
 import pandas as pd
 import csv
@@ -93,9 +97,9 @@ def wordCount(data):
  
 
 #spam word checker
-def spamWords(data, spam):
+def spamWords(data):
     
-    #spamWordList = ['free', 'urgent', 'call', 'freemsg', 'mob', 'txt', 'entry','reply','claim','download', '2']
+    spamWordList = ['free', 'urgent', 'call', 'freemsg', 'mob', 'txt', 'entry','reply','claim','download', '2']
     
     if any(map(lambda each: each in data, spamWordList)) == True:
         return 1
@@ -152,20 +156,31 @@ def preProcessMessage(data,stop_words = True, stemm = True, lower = True, grams 
 
 
 #testing thinking about implementing naive bayes theorm
-def create_dictionary(data):
-    '''data = '' + data.apply(lambda x: ' '.join(x))
+def tfid_Vectorize(data):
+    words = '' + data['SMSMessage'].apply(lambda x: ' '.join(x)) 
+    vectorizer = TfidfVectorizer(any(words),ngram_range=(1,2),encoding="utf-8", lowercase=False, strip_accents="unicode", stop_words="english", norm= 'l2')
     
-    vectorizer = TfidfVectorizer(any(data),ngram_range=(1,2),encoding="utf-8", lowercase=False, strip_accents="unicode", stop_words="english", norm= 'l2')
-    #
-    train = vectorizer.fit_transform(data)
-    train_x, test_x, train_y, test_y = train_test_split(train[1], train[0])
-    classifier = LogisticRegression()
-    classifier.fit(train_x, train)
+    msgModel = vectorizer.fit_transform(words)
+    #print(vectorizer.vocabulary_['jurong'])
+    print(vectorizer.idf_)
+    '''for i in range(len(data)):
+        for index, value in enumerate(data["SMSMessage"][i]):
+            if value in vectorizer.vocabulary_:
+                print('yes')
+            print('no')
+    #train_x, test_x, train_y, test_y = train_test_split(train[1], train[0])
+    #classifier = LogisticRegression()
+    #classifier.fit(train_x, train)
+    train, test, spam_nospam_train, spam_nospam_test = train_test_split(msgModel, data['label'], test_size=0.3, random_state=20)
+    Spam_model = LogisticRegression(solver='liblinear', penalty='l1')
+    Spam_model.fit(train, spam_nospam_train)
+    pred = Spam_model.predict(test)
+    accuracy_score(spam_nospam_test,pred)
     
-    print(vectorizer.vocabulary_)
-    '''#counts = Counter(data)
-    
-    '''items = []
+    #print(pos_vec)
+    #counts = Counter(data)
+    #return msgModel
+    items = []
     for i in range(len(data)):
         counts = Counter(data[i])    
         item = counts.most_common(1)
@@ -180,82 +195,6 @@ def featureExtract(df, action=None):
       
     return featureFrame
     
-trainPositive = {}
-trainNegative = {}
-
-
-
-def naive_bayes(data):
-    pA = float(0)
-    pNa = float(0)
-    
-    total = 0
-    numSpam = 0
-    for email in data['label']:
-        if email == 1:
-            numSpam += 1
-        total += 1
-    
-    pA = numSpam / float(total) 
-    pNa = (total - numSpam)/float(total)
-    
-    return pA, pNa
-
- 
-
-    
-def processEmail(data, body, label):
-    positivetotal = 0
-    negativetotal = 0
-    
-    tokens = [lang.word_tokenize(token) for token in data['SMSMessage']]
-    itemsPos = []
-    itemsNeg = []
-    #get total ham and total spam, needs to be tokenized
-    for i in range(len(tokens)):
-        for index, word in enumerate(tokens[i]):
-           
-            if data['label'][i] == 1:
-                trainPositive[word] = trainPositive.get(word, 0) + 1
-                #seperate the data
-                itemsPos.append(tokens[i])
-                positivetotal += 1   
-            else:
-                trainNegative[word] = trainNegative.get(word, 0) + 1
-                #seperate the data
-                itemsNeg.append(tokens[i])
-                negativetotal += 1
-    
-    pA, pNa = naive_bayes(data)
-    return trainPositive
-    #classify(itemsPos, itemsNeg, pA, pNa, positivetotal, negativetotal, trainPositive,trainNegative)
-
-#need to figure out what this is doing with tp word
-def conditionalWord(word, total, tp_n):
-    return tp_n[word]/float(total) 
-        
-#not understanding how I am getting a non type error
-def conditionalEmail(body, total, tp_n):
-    result = 1.0
-    for word in body:
-          result += conditionalWord(word, total, tp_n)
-    return result
-
-def classify(emailPos, emailNeg, pA, pNa, pT, nT, tp, tn):
-
-    #tokens passed, bug somewhere here in the passing of tp and tn
-    for i in range(len(emailPos)):
-        isSpam = pA * conditionalEmail(emailPos[i], pT, tp)
-        print(isSpam)
-    for i in range(len(emailNeg)):
-        notSpam = pNa * conditionalEmail(emailNeg[i], nT, tn)
-        #print(notSpam)
-        '''if isSpam > notSpam:
-            result.append(1)
-        else:
-            result.append(0)'''
-    #print(isSpam)
-    #print(notSpam)
 
 def main():
     
@@ -266,20 +205,21 @@ def main():
     data = data.replace({"spam": 1, "ham": 0})
     df = pd.DataFrame(data)
     
-    isSpam = processEmail(df,df['SMSMessage'][1], df['label'][1]) 
-    #print(isSpam)
     #need to tokenize before searching a url and convert to lowercase
     df['SMSMessage'] = preProcessMessage(df['SMSMessage'])
-    
     df['Website'] = featureExtract(df,hasWebsite)
     df['W-count'] = featureExtract(df,wordCount)
     df['F-WordCount'] = featureExtract(df,mostFrequentWords)
-    df['Spamword'] = featureExtract(df,spamWords, isSpam)
     
+    df['Spamword'] = featureExtract(df, spamWords)
+    
+    df['Vectors'] = tfid_Vectorize(df)
+    
+    #print(df['Vectors'])
     #create and export the processed dataset?
-    df.to_csv('./SpamProcessedData.csv', encoding='utf-8-sig')
+    #df.to_csv('./SpamProcessedData.csv', encoding='utf-8-sig')
     
-    #translate the message data back to string values for arff.dump
+    '''#translate the message data back to string values for arff.dump
     df['SMSMessage'] = '' + df['SMSMessage'].apply(lambda x: ' '.join(x))
     #df.drop(['SMSMessage'], axis=1)
     arff.dump('spam.arff',df.values , relation="spam", names=df.columns)
