@@ -213,17 +213,18 @@ def main():
     
     df['Spamword'] = featureExtract(df, spamWords)
     
-    df['Vectors'] = tfid_Vectorize(df)
+    #df['Vectors'] = tfid_Vectorize(df)
     
     #print(df['Vectors'])
     #create and export the processed dataset?
-    #df.to_csv('./SpamProcessedData.csv', encoding='utf-8-sig')
+    df.to_csv('./SpamProcessedData.csv', encoding='utf-8-sig')
     
-    '''#translate the message data back to string values for arff.dump
+    #translate the message data back to string values for arff.dump
     df['SMSMessage'] = '' + df['SMSMessage'].apply(lambda x: ' '.join(x))
-    #df.drop(['SMSMessage'], axis=1)
+    df.drop(['SMSMessage'], axis = 1)
+    #arff dump does not like tfidVectors
     arff.dump('spam.arff',df.values , relation="spam", names=df.columns)
-    #print(arff.dumps('spam.arff',df.values, relation="spam"))'''
+    #print(arff.dumps('spam.arff',df.values, relation="spam"))
     
     print('done')
 main()
