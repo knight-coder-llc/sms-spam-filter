@@ -1,102 +1,84 @@
-# Load the raw training data and replace any missing values with NA
+
+# Load the raw training data and replace missing values with NA
 training.data.raw <- read.csv('SpamProcessedData.csv', header=T, na.strings=c(""))
-
 str(training.data.raw)
-data <- training.data.raw
-data$label
-#need spam and ham to be a factor
-data$label <- factor(data$label)
-is.factor(data$label)
 
-#process data
-library(tm)
-library(SnowballC)
-library(Matrix)
-library(ggplot2)
+# Output the number of missing values for each column
+sapply(training.data.raw,function(x) sum(is.na(x)))
+
+# Quick check for how many different values for each feature
+sapply(training.data.raw, function(x) length(unique(x)))
+
+# A visual way to check for missing data
+library(Amelia)
+missmap(training.data.raw, main = "Missing values vs observed")
+
+# Subsetting the data
+data <- subset(training.data.raw,select=c(2,3,4,5,6))
+
+# Substitute the missing values with the average value
+data$Website[is.na(data$Website)] <- mean(data$Website,na.rm=T)
+data$W.count[is.na(data$W.count)] <- mean(data$W.count, na.rm=T)
+data$F.WordCount[is.na(data$F.WordCount)] <- mean(data$F.WordCount, na.rm=T)
+data$Spamword[is.na(data$Spamword)] <- mean(data$Spamword, na.rm=T)
+
+
+# categorical variables
+is.factor(data$label)         
+
+
+# Check categorical variables encoding for better understanding of the fitted model
+contrasts(data$label)        
+    
+
+# Remove rows with NAs
+data <- data[!is.na(data$Website),]
+data <- data[!is.na(data$W.count),]
+data <- data[!is.na(data$F.WordCount),]
+data <- data[!is.na(data$Spamword),]
+rownames(data) <- NULL
+
+# Train test splitting
+train <- data[1:2786,]
+test <- data[2787:5574,]
+
+# Model fitting
+model <- glm(label ~.,family=binomial(link='logit'),data=train)
+
+#-------------------------------------------------------------------------------
+# MEASURING THE PREDICTIVE ABILITY OF THE MODEL
+# If prob > 0.5 then 1, else 0. Threshold can be set for better results
+fitted.results <- predict(model,newdata=subset(test,select=c(2,3,4,5)),type='response')
+fitted.results <- ifelse(fitted.results > 0.5,"spam","ham")
+
+
 library(ROCR)
-library(caret)
-library(dplyr)
-library(e1071)
+# ROC and AUC
+p <- predict(model, newdata=subset(test,select=c(2,3,4,5)), type="response")
+pr <- prediction(p, test$label)
+prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+plot(prf)
 
-dtm <- Corpus(VectorSource(data$SMSMessage)) %>%
-  tm_map(removeNumbers) %>%
-  tm_map(stripWhitespace) %>%
-  tm_map(removeWords, stopwords()) %>%
-  tm_map(content_transformer(tolower)) %>%
-  tm_map(removePunctuation) %>%
-  tm_map(stemDocument) %>%
-  DocumentTermMatrix()
-
-index = sample(5559, 5559*0.8)
-
-train_matrix <- as.matrix(dtm[index,])
-test_matrix <- as.matrix(dtm[-index,])
-
-dtm_train <- Matrix(train_matrix, sparse=T)
-dtm_test <- Matrix(test_matrix, sparse=T)
-
-train_labels <- data[index, ]$label
-test_labels <- data[-index, ]$label
-
-prop.table(table(train_labels))
-
-fit_ridge <- glmnet(dtm_train, train_labels, family = 'binomial', alpha = 0)
-fit_lasso <- glmnet(dtm_train, train_labels, family = 'binomial', alpha = 1)
-
-pred <- predict(fit_ridge, dtm_test, type = 'response')
-head(pred[,1:11])
- 
-head(coef(fit_ridge, s=1.52))
-
-glmnet_pred <- predict(fit_ridge, newx = dtm_test, s = c(1.52, 0.1))
-head(glmnet_pred)
-
-#plot(fit_ridge, xlab = 'Ridge Method')
-#abline(0,0)
-
-#plot(fit_lasso, xlab = 'Lasso Method')
-#abline(0,0)
-
-#comparison
-glmnet_fit <- cv.glmnet(x=dtm_train, y = train_labels, family = 'binomial', alpha = 0)
-head(coef(glmnet_fit, s = 'lambda.min'))
-plot(glmnet_fit)
-glmnet_fit$lambda.min
-
-glmnet_lasso <- cv.glmnet(x = dtm_train, y = train_labels, family = 'binomial', alph = 1)
-plot(glmnet_lasso)
-glmnet_lasso$lambda.min
-
-preds_logit <- predict(glmnet_fit, newx = dtm_test, type='response', s = 'lambda.min')
-head(preds_logit)
-
-summary(preds_logit)
-
-preds_newlogit <- rep('0', length(preds_logit))
-preds_newlogit[preds_logit >= 0.5] <- '1'
-
-#print confusion matrix
-confusionMatrix(test_labels, preds_newlogit)
-
-#create data frame
-results <- data.frame(pred=preds_logit, actual = test_labels)
-ggplot(results, aes(x = preds_logit, fill = actual)) + geom_density(alpha = 0.2)
-
-prediction_logit <- prediction(preds_logit, test_labels)
-perf <- performance(prediction_logit, measure = "tpr", x.measure = "fpr")
-
-#area under the curve
-auc <- performance(prediction_logit, measure = "auc")
+auc <- performance(pr, measure = "auc")
 auc <- auc@y.values[[1]]
 auc
 
-#ROC curve
-roc_logit <- data.frame(fpr = unlist(perf@x.values), tpr = unlist(perf@y.values))
+# Confusion matrix
+library(caret)
+library(e1071)
+# TPR = sensitivity (e.g., How many relevant items are selected by the model?)
+# FPR = 1-specificity (e.g., how many non-relevant items are truly negatively selected by the mode?)
+reference=factor(test$label)
+str(reference)
+str(fitted.results)
 
-ggplot(roc_logit, aes(x = fpr, ymin = 0, ymax = tpr)) + 
-  geom_ribbon(alpha = 0.1) +
-  geom_line(aes(y = tpr)) +
-  geom_abline(slope = 1, intercept = 0, linetype = 'dashed') +
-  ggtitle("ROC Curve") +
-  ylab('True Positive Rate') +
-  xlab('False Positive Rate')
+confusionMatrix(data=factor(fitted.results),reference, positive=levels(reference)[2])
+
+# Student Exercise
+# 1) Calculate the TPR and FPR using the confusion matrix
+#    What is TPR? .955
+#    What is FPR? .295
+#
+# 3) Homework! Do a same job above with the binomial logistic regression 
+#    w/ the 10 folds Cross Validation 
+#    (Hint: You might check a caret package.) 
