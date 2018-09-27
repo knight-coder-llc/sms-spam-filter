@@ -66,6 +66,7 @@ auc
 # Confusion matrix
 library(caret)
 library(e1071)
+library(pROC)
 # TPR = sensitivity (e.g., How many relevant items are selected by the model?)
 # FPR = 1-specificity (e.g., how many non-relevant items are truly negatively selected by the mode?)
 reference=factor(test$label)
@@ -74,11 +75,28 @@ str(fitted.results)
 
 confusionMatrix(data=factor(fitted.results),reference, positive=levels(reference)[2])
 
-# Student Exercise
-# 1) Calculate the TPR and FPR using the confusion matrix
-#    What is TPR? .955
-#    What is FPR? .295
-#
-# 3) Homework! Do a same job above with the binomial logistic regression 
-#    w/ the 10 folds Cross Validation 
-#    (Hint: You might check a caret package.) 
+#tpr = .955
+#fpr = .295
+
+# the 5 folds Cross Validation
+control <-trainControl(method='repeatedcv', number=5, repeats=5, classProbs = T, savePredictions = T)
+cvmodel <- train(label ~., trControl=control, method="glm",family=binomial(link='logit'),data=train, preProc=c('center','scale'))
+
+p <- predict(cvmodel, newdata= test, type="prob")
+
+resultMatrix <- confusionMatrix(cvmodel, norm = "none")
+resultMatrix
+cvmodel$pred$spam
+# plot ROC for 5 fold Cross Validation
+roc1 <- roc(cvmodel$pred$pred, as.numeric(cvmodel$pred$obs))
+plot(roc1)
+
+# the 10 folds Cross Validation 
+control <- trainControl(method="repeatedcv", number=10, repeats=10, classProbs=T, savePredictions = T)
+cvmodel <- train(label ~., trControl=control, method="glm",family=binomial(link='logit'),data=train, preProc=c('center','scale'))
+
+resultMatrix <- confusionMatrix(cvmodel, norm = "none")
+resultMatrix
+
+roc2 <- roc(cvmodel$pred$pred, as.numeric(cvmodel$pred$obs))
+plot(roc2)

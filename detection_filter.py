@@ -174,9 +174,9 @@ def main():
     df['Spamword'] = featureExtract(df, spamWords)
     
     #translate the message data back to string values for arff.dump
-    df['SMSMessage'] = '' + df['SMSMessage'].apply(lambda x: ' '.join(x))
+    #df['SMSMessage'] = '' + df['SMSMessage'].apply(lambda x: ' '.join(x))
     #arff dump does not like tfidVectors
-    arff.dump('spam.arff',df.values , relation="spam", names=df.columns)
+    #arff.dump('spam.arff',df.values , relation="spam", names=df.columns)
     #print(arff.dumps('spam.arff',df.values, relation="spam"))
     df.drop(columns=['SMSMessage'], inplace=True, axis = 1)
     #create and export the processed dataset?
