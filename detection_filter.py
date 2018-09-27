@@ -163,7 +163,7 @@ def main():
     pd.set_option('display.max_colwidth', 100)
     #read file and create the dataframe
     data = pd.read_csv('./dataset/SMSSpamCollection.txt', sep='\t', quoting=csv.QUOTE_NONE, names=["label", "SMSMessage"], encoding="utf8")
-    #data = data.replace({"spam": 1, "ham": 0})
+    
     df = pd.DataFrame(data)
     
     #need to tokenize before searching a url and convert to lowercase
@@ -176,11 +176,14 @@ def main():
     #translate the message data back to string values for arff.dump
     #df['SMSMessage'] = '' + df['SMSMessage'].apply(lambda x: ' '.join(x))
     #arff dump does not like tfidVectors
-    #arff.dump('spam.arff',df.values , relation="spam", names=df.columns)
+    
     #print(arff.dumps('spam.arff',df.values, relation="spam"))
     df.drop(columns=['SMSMessage'], inplace=True, axis = 1)
+    
     #create and export the processed dataset?
     df.to_csv('./SpamProcessedData.csv', encoding='utf-8-sig')
+    df['label'].replace({"spam": 1, "ham": 0}, inplace=True, regex=True)
     
+    arff.dump('spam.arff',df.values , relation="spam", names=df.columns)
     print('done')
 main()
