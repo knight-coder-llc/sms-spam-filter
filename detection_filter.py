@@ -87,7 +87,7 @@ def mostFrequentWords(data, word=True):
         return item
 
 
-
+#spam messages can be lengthy
 def wordCount(data):
     length = len(data)
     
@@ -129,15 +129,11 @@ def preProcessMessage(data,stop_words = True, stemm = True, lower = True, grams 
     #remove punctuations
     if(punctuation):
         data = data.str.translate(str.maketrans("","",'<>|-[]_.:;,!?&()''""\\'))
-         
-    
-        
+            
     #tokenize the data    
     if(tokenize):
         tokens = [lang.word_tokenize(token) for token in data]
 
-    
-        #print(token)
     #remove the stopwords to improve efficiency
     if(stop_words):
         stop = stopwords.words('english')
@@ -154,40 +150,6 @@ def preProcessMessage(data,stop_words = True, stemm = True, lower = True, grams 
         return tokens
     return data
 
-
-#testing thinking about implementing naive bayes theorm
-def tfid_Vectorize(data):
-    words = '' + data['SMSMessage'].apply(lambda x: ' '.join(x)) 
-    vectorizer = TfidfVectorizer(any(words),ngram_range=(1,2),encoding="utf-8", lowercase=False, strip_accents="unicode", stop_words="english", norm= 'l2')
-    
-    msgModel = vectorizer.fit_transform(words)
-    #print(vectorizer.vocabulary_['jurong'])
-    print(vectorizer.idf_)
-    '''for i in range(len(data)):
-        for index, value in enumerate(data["SMSMessage"][i]):
-            if value in vectorizer.vocabulary_:
-                print('yes')
-            print('no')
-    #train_x, test_x, train_y, test_y = train_test_split(train[1], train[0])
-    #classifier = LogisticRegression()
-    #classifier.fit(train_x, train)
-    train, test, spam_nospam_train, spam_nospam_test = train_test_split(msgModel, data['label'], test_size=0.3, random_state=20)
-    Spam_model = LogisticRegression(solver='liblinear', penalty='l1')
-    Spam_model.fit(train, spam_nospam_train)
-    pred = Spam_model.predict(test)
-    accuracy_score(spam_nospam_test,pred)
-    
-    #print(pos_vec)
-    #counts = Counter(data)
-    #return msgModel
-    items = []
-    for i in range(len(data)):
-        counts = Counter(data[i])    
-        item = counts.most_common(1)
-        items.append(item)'''
-
-    #print(counts.most_common(3000))
-
 def featureExtract(df, action=None):
     featureFrame = []
     for i in range(len(df)):
@@ -195,7 +157,6 @@ def featureExtract(df, action=None):
       
     return featureFrame
     
-
 def main():
     
     #set column width to display data
@@ -210,12 +171,8 @@ def main():
     df['Website'] = featureExtract(df,hasWebsite)
     df['W-count'] = featureExtract(df,wordCount)
     df['F-WordCount'] = featureExtract(df,mostFrequentWords)
-    
     df['Spamword'] = featureExtract(df, spamWords)
     
-    #df['Vectors'] = tfid_Vectorize(df)
-    
-    #print(df['Vectors'])
     #translate the message data back to string values for arff.dump
     df['SMSMessage'] = '' + df['SMSMessage'].apply(lambda x: ' '.join(x))
     #arff dump does not like tfidVectors
