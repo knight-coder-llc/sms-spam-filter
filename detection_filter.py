@@ -179,11 +179,12 @@ def main():
     
     #print(arff.dumps('spam.arff',df.values, relation="spam"))
     df.drop(columns=['SMSMessage'], inplace=True, axis = 1)
-    
+    attr = ['label {ham, spam}','Website','W-count',
+        'F-WordCount','Spamword']
     #create and export the processed dataset?
     df.to_csv('./SpamProcessedData.csv', encoding='utf-8-sig')
-    df['label'].replace({"spam": 1, "ham": 0}, inplace=True, regex=True)
+    #df['label'].replace({"spam": 1, "ham": 0}, inplace=True, regex=True)
     
-    arff.dump('spam.arff',df.values , relation="spam", names=df.columns)
+    arff.dump('spam.arff',df.values , relation="spam", names=attr)
     print('done')
 main()

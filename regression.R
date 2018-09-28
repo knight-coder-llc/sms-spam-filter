@@ -51,7 +51,6 @@ model <- glm(label ~.,family=binomial(link='logit'),data=train)
 fitted.results <- predict(model,newdata=subset(test,select=c(2,3,4,5)),type='response')
 fitted.results <- ifelse(fitted.results > 0.5,"spam","ham")
 
-
 library(ROCR)
 # ROC and AUC
 p <- predict(model, newdata=subset(test,select=c(2,3,4,5)), type="response")
@@ -78,6 +77,17 @@ confusionMatrix(data=factor(fitted.results),reference, positive=levels(reference
 #tpr = .955
 #fpr = .295
 
+head(fitted.results)
+
+#CDF for tested model
+plot(ecdf(fitted.results == 'spam'), col="red")
+
+lines(ecdf(test$label == 'spam'),  col="blue")
+legend("bottomright",
+       legend=c("Pred","Obs"),
+       col=c("red","blue"),
+       pch=15)
+
 # the 5 folds Cross Validation
 control <-trainControl(method='repeatedcv', number=5, repeats=5, classProbs = T, savePredictions = T)
 cvmodel <- train(label ~., trControl=control, method="glm",family=binomial(link='logit'),data=train, preProc=c('center','scale'))
@@ -100,3 +110,13 @@ resultMatrix
 
 roc2 <- roc(cvmodel$pred$pred, as.numeric(cvmodel$pred$obs))
 plot(roc2)
+
+#CDF for Cross validated training model
+plot(ecdf(cvmodel$pred[,'pred'] == 'spam'), col="red")
+
+lines(ecdf(cvmodel$pred[,'obs'] == 'spam'),  col="blue")
+lines(ecdf(cvmodel$pred))
+legend("bottomright",
+       legend=c("Pred","Obs"),
+       col=c("red","blue"),
+       pch=15)
