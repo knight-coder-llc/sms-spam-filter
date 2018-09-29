@@ -9,8 +9,6 @@ import nltk as lang
 #uncomment this if you do not have nltk module
 #lang.download('all')
 
-
-import matplotlib.pyplot as plot
 from nltk.stem.snowball import SnowballStemmer
 from nltk.corpus import stopwords
 from collections import Counter
@@ -29,29 +27,6 @@ import arff
 #from sklearn.feature_extraction.text import CountVectorizer
 #import sklearn as sk 
  
-
-
-#create spam word cloud (not needed)
-'''def createWordCloud(data):
-    s_words = ' '.join(list(data[data['label'] == 1]['SMSMessage']))
-    word_count = WordCloud(width = 512, height = 512).generate(s_words)
-    plot.figure(figsize = (10, 8), facecolor = 'k')
-    plot.imshow(word_count)
-    plot.axis('off')
-    plot.tight_layout(pad = 0)
-    print('SPAM')
-    plot.show()
-    print('\n')
-    #create ham word cloud
-    h_words = ' '.join(list(data[data['label'] == 0]['SMSMessage']))
-    word_count = WordCloud(width = 512, height = 512).generate(h_words)
-    plot.figure(figsize = (10, 8), facecolor = 'k')
-    plot.imshow(word_count)
-    plot.axis('off')
-    plot.tight_layout(pad = 0)
-    print('HAM')
-    plot.show()'''
-
 # measure the length of the message
 def messageLength(data):
     messageLen = len(data)
@@ -116,20 +91,6 @@ def preProcessMessage(data,stop_words = True, stemm = True, lower = True, grams 
     if(lower):
         data = data.str.lower()
     
-    #use n-grams to improve accuracy
-    if(grams > 1):
-        '''token = []
-        for i in range(len(tokens)):
-            for j in range(len(tokens[i])):
-                token += [' '.join(tokens[i][j])]
-        #print(tokens)'''
-        
-        
-        '''vectorizer = TfidfVectorizer(any(data),ngram_range=(1,2),encoding="utf-8", lowercase=False, strip_accents="unicode", stop_words="english", norm= 'l1')
-        vectorizer.fit_transform(data)
-        
-        spamlist = vectorizer.get_feature_names()'''
-        
     #remove punctuations
     if(punctuation):
         data = data.str.translate(str.maketrans("","",'<>|-[]_.:;,!?&()''""\\'))
