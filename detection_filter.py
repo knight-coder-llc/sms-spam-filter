@@ -6,29 +6,33 @@ Purpose: SMS Spam Filter
 """
 
 import nltk as lang
-#use this if you do not have nltk module
+#uncomment this if you do not have nltk module
 #lang.download('all')
-import numpy as np
+
+
 import matplotlib.pyplot as plot
-from wordcloud import WordCloud
 from nltk.stem.snowball import SnowballStemmer
 from nltk.corpus import stopwords
 from collections import Counter
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_extraction import DictVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
-from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import accuracy_score
-from sklearn.feature_extraction.text import CountVectorizer
-
-import sklearn as sk  
 import pandas as pd
 import csv
 import arff
 
-#create spam word cloud
-def createWordCloud(data):
+#import numpy as np
+#from wordcloud import WordCloud
+#from sklearn.feature_extraction.text import TfidfVectorizer
+#from sklearn.feature_extraction import DictVectorizer
+#from sklearn.linear_model import LogisticRegression
+#from sklearn.model_selection import train_test_split
+#from sklearn.naive_bayes import GaussianNB
+#from sklearn.metrics import accuracy_score
+#from sklearn.feature_extraction.text import CountVectorizer
+#import sklearn as sk 
+ 
+
+
+#create spam word cloud (not needed)
+'''def createWordCloud(data):
     s_words = ' '.join(list(data[data['label'] == 1]['SMSMessage']))
     word_count = WordCloud(width = 512, height = 512).generate(s_words)
     plot.figure(figsize = (10, 8), facecolor = 'k')
@@ -46,7 +50,7 @@ def createWordCloud(data):
     plot.axis('off')
     plot.tight_layout(pad = 0)
     print('HAM')
-    plot.show()
+    plot.show()'''
 
 # measure the length of the message
 def messageLength(data):
@@ -175,7 +179,6 @@ def main():
     
     #translate the message data back to string values for arff.dump
     #df['SMSMessage'] = '' + df['SMSMessage'].apply(lambda x: ' '.join(x))
-    #arff dump does not like tfidVectors
     
     #print(arff.dumps('spam.arff',df.values, relation="spam"))
     df.drop(columns=['SMSMessage'], inplace=True, axis = 1)
